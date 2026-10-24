@@ -113,6 +113,57 @@ private class CreateBookingControllerTest {
     }
 
     @IsTest
+    static void lookupsFailGracefullyWithoutAccess() {
+        Tour_Plan__c p = plan();
+        Profile minimal = [SELECT Id FROM Profile WHERE Name = 'Minimum Access - Salesforce' LIMIT 1];
+        String unique = String.valueOf(Crypto.getRandomInteger()).replace('-', '');
+        User restricted = new User(
+            ProfileId = minimal.Id,
+            LastName = 'Restricted',
+            Alias = 'restr',
+            Email = 'restricted' + unique + '@example.com',
+            Username = 'restricted' + unique + '@createbooking.test',
+            EmailEncodingKey = 'UTF-8',
+            LanguageLocaleKey = 'en_US',
+            LocaleSidKey = 'en_US',
+            TimeZoneSidKey = 'Asia/Kolkata'
+        );
+        insert restricted;
+
+        Integer failures = 0;
+        Test.startTest();
+        System.runAs(restricted) {
+            try {
+                CreateBookingController.searchContacts('Exist', null);
+            } catch (AuraHandledException e) {
+                failures++;
+                Assert.isTrue(e.getMessage().contains('Contacts could not be searched'));
+            }
+            try {
+                CreateBookingController.getTourMasters();
+            } catch (AuraHandledException e) {
+                failures++;
+                Assert.isTrue(e.getMessage().contains('Tour Masters could not be loaded'));
+            }
+            try {
+                CreateBookingController.getTourPlans(p.Tour_Master__c);
+            } catch (AuraHandledException e) {
+                failures++;
+                Assert.isTrue(e.getMessage().contains('Tour Plans could not be loaded'));
+            }
+            try {
+                CreateBookingController.getOptionalTours(p.Tour_Master__c);
+            } catch (AuraHandledException e) {
+                failures++;
+                Assert.isTrue(e.getMessage().contains('Optional Tours could not be loaded'));
+            }
+        }
+        Test.stopTest();
+
+        Assert.areEqual(4, failures, 'A user without object access must get a readable error from every lookup');
+    }
+
+    @IsTest
     static void createsApprovedBookingWithExistingAndNewGuests() {
         CreateBookingController.BookingRequest req = baseRequest(guest(existingContact().Id, null));
         // PAX are created without Mobile and PAN

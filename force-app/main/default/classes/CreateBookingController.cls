@@ -19,55 +19,74 @@ public with sharing class CreateBookingController {
 
     @AuraEnabled(cacheable=true)
     public static List<Contact> searchContacts(String searchKey, List<Id> excludeIds) {
-        String key = searchKey == null ? '' : searchKey.trim();
-        if (key.length() < MIN_SEARCH_LENGTH) {
-            return new List<Contact>();
+        try {
+            String key = searchKey == null ? '' : searchKey.trim();
+            if (key.length() < MIN_SEARCH_LENGTH) {
+                return new List<Contact>();
+            }
+            String likeKey = '%' + key + '%';
+            List<Id> excluded = excludeIds == null ? new List<Id>() : excludeIds;
+            return [
+                SELECT Id, Name, Salutation, FirstName, LastName, MobilePhone, Email,
+                       Passport_Number__c, Date_Of_Issue__c, Date_Of_Expiry__c
+                FROM Contact
+                WHERE (Name LIKE :likeKey OR MobilePhone LIKE :likeKey OR Email LIKE :likeKey
+                       OR Passport_Number__c LIKE :likeKey)
+                  AND Id NOT IN :excluded
+                WITH USER_MODE
+                ORDER BY Name
+                LIMIT 10
+            ];
+        } catch (Exception e) {
+            throw error('Contacts could not be searched: ' + e.getMessage());
         }
-        String likeKey = '%' + key + '%';
-        List<Id> excluded = excludeIds == null ? new List<Id>() : excludeIds;
-        return [
-            SELECT Id, Name, Salutation, FirstName, LastName, MobilePhone, Email,
-                   Passport_Number__c, Date_Of_Issue__c, Date_Of_Expiry__c
-            FROM Contact
-            WHERE (Name LIKE :likeKey OR MobilePhone LIKE :likeKey OR Email LIKE :likeKey
-                   OR Passport_Number__c LIKE :likeKey)
-              AND Id NOT IN :excluded
-            ORDER BY Name
-            LIMIT 10
-        ];
     }
 
     @AuraEnabled(cacheable=true)
     public static List<Tour_Master__c> getTourMasters() {
-        return [SELECT Id, Name, FOREX_Type__c FROM Tour_Master__c ORDER BY Name];
+        try {
+            return [SELECT Id, Name, FOREX_Type__c FROM Tour_Master__c WITH USER_MODE ORDER BY Name LIMIT 50000];
+        } catch (Exception e) {
+            throw error('Tour Masters could not be loaded: ' + e.getMessage());
+        }
     }
 
     @AuraEnabled(cacheable=true)
     public static List<Tour_Plan__c> getTourPlans(Id tourMasterId) {
-        if (tourMasterId == null) {
-            return new List<Tour_Plan__c>();
+        try {
+            if (tourMasterId == null) {
+                return new List<Tour_Plan__c>();
+            }
+            return [
+                SELECT Id, Name, Season__c, Start_Date__c, End_Date__c, Cost_INR__c, Cost_in_Forex__c,
+                       Single__c, Double_Tuwin_Triple__c, Child_With_Bed__c, Child_Without_Bed__c,
+                       FOREX_Type__c, Predefined_Standard_Discount__c, Predefined_Special_Discount__c
+                FROM Tour_Plan__c
+                WHERE Tour_Master__c = :tourMasterId
+                WITH USER_MODE
+                ORDER BY Start_Date__c DESC NULLS LAST, Name
+            ];
+        } catch (Exception e) {
+            throw error('Tour Plans could not be loaded: ' + e.getMessage());
         }
-        return [
-            SELECT Id, Name, Season__c, Start_Date__c, End_Date__c, Cost_INR__c, Cost_in_Forex__c,
-                   Single__c, Double_Tuwin_Triple__c, Child_With_Bed__c, Child_Without_Bed__c,
-                   FOREX_Type__c, Predefined_Standard_Discount__c, Predefined_Special_Discount__c
-            FROM Tour_Plan__c
-            WHERE Tour_Master__c = :tourMasterId
-            ORDER BY Start_Date__c DESC NULLS LAST, Name
-        ];
     }
 
     @AuraEnabled(cacheable=true)
     public static List<Optional_Tour__c> getOptionalTours(Id tourMasterId) {
-        if (tourMasterId == null) {
-            return new List<Optional_Tour__c>();
+        try {
+            if (tourMasterId == null) {
+                return new List<Optional_Tour__c>();
+            }
+            return [
+                SELECT Id, Name, Cost__c, Description__c
+                FROM Optional_Tour__c
+                WHERE Tour_Master__c = :tourMasterId
+                WITH USER_MODE
+                ORDER BY Name
+            ];
+        } catch (Exception e) {
+            throw error('Optional Tours could not be loaded: ' + e.getMessage());
         }
-        return [
-            SELECT Id, Name, Cost__c, Description__c
-            FROM Optional_Tour__c
-            WHERE Tour_Master__c = :tourMasterId
-            ORDER BY Name
-        ];
     }
 
     // ---------------------------------------------------------------------------------
@@ -76,15 +95,7 @@ public with sharing class CreateBookingController {
 
     @AuraEnabled
     public static Id createBooking(String requestJson) {
-        BookingRequest req;
-        try {
-            req = (BookingRequest) JSON.deserialize(requestJson, BookingRequest.class);
-        } catch (Exception e) {
-            throw error('The booking request could not be read. Please refresh the page and try again.');
-        }
-        if (req == null) {
-            throw error('The booking request is empty.');
-        }
+        BookingRequest req = parseRequest(requestJson);
 
         List<GuestInput> guests = collectGuests(req);
         Tour_Plan__c plan = validateRequest(req, guests);
@@ -99,65 +110,11 @@ public with sharing class CreateBookingController {
             // Same format as the flow's BookingName formula: <guest name>-<d>/<m>/<yy of tour start>
             String bookingName = truncate(fullName(primaryContact), MAX_NAME_LENGTH - 9) + '-' + formatStartDate(plan.Start_Date__c);
 
-            Decimal optionalTourCost = 0;
-            for (Optional_Tour__c ot : optionalTours) {
-                optionalTourCost += ot.Cost__c == null ? 0 : ot.Cost__c;
-            }
+            Booking__c booking = buildBooking(req, plan, primaryContact.Id, bookingName, optionalTours);
+            insert as user booking;
 
-            Boolean isAddition = req.additionInTourCost == true;
-            Boolean isReduction = req.reductionInTourCost == true;
-
-            Booking__c booking = new Booking__c(
-                Name = bookingName,
-                Contact__c = primaryContact.Id,
-                Tour_Plan__c = plan.Id,
-                FOREX_Type__c = bookingForexType(plan.FOREX_Type__c),
-                Exchange_Rate__c = req.exchangeRate,
-                // As in the flow: a reduction in tour cost needs approval, everything else is approved
-                Booking_Status__c = isReduction ? STATUS_SEND_FOR_APPROVAL : STATUS_APPROVED,
-                Addition_in_Tour_Cost__c = isAddition,
-                INR_Component__c = isAddition ? nz(req.inrAddition) : 0,
-                FOREX_Component__c = isAddition ? nz(req.forexAddition) : 0,
-                Reduction_in_Tour_Cost__c = isReduction,
-                INR_Component_Reduction__c = isReduction ? nz(req.inrReduction) : 0,
-                FOREX_Component_Reduction__c = isReduction ? nz(req.forexReduction) : 0,
-                Standard_Discount__c = nz(req.standardDiscount),
-                Special_Discount__c = nz(req.specialDiscount),
-                Optional_Tour__c = !optionalTours.isEmpty(),
-                Optional_Tour_Cost__c = optionalTourCost,
-                Nominee_Name__c = req.nomineeName,
-                Nominee_Contact_Number__c = req.nomineeContactNumber,
-                Relation_with_Nominee__c = req.relationWithNominee,
-                Remarks__c = req.remarks
-            );
-            insert booking;
-
-            List<Customer_Booking_List__c> bookingLists = new List<Customer_Booking_List__c>();
-            for (Integer i = 0; i < guests.size(); i++) {
-                GuestInput guest = guests[i];
-                Contact c = guestContacts[i];
-                Boolean isPrimary = i == 0;
-                bookingLists.add(new Customer_Booking_List__c(
-                    Name = truncate(isPrimary ? bookingName : bookingName + '-' + fullName(c), MAX_NAME_LENGTH),
-                    Booking__c = booking.Id,
-                    Customer__c = c.Id,
-                    Room_Type__c = guest.roomType,
-                    Meal_Preference__c = String.isBlank(guest.mealPreference) ? null : guest.mealPreference
-                ));
-            }
-            insert bookingLists;
-
-            if (!optionalTours.isEmpty()) {
-                List<Booking_Optional_Tour__c> bookingOptionalTours = new List<Booking_Optional_Tour__c>();
-                for (Optional_Tour__c ot : optionalTours) {
-                    bookingOptionalTours.add(new Booking_Optional_Tour__c(
-                        Name = truncate(bookingName + '-' + ot.Name, MAX_NAME_LENGTH),
-                        Booking__c = booking.Id,
-                        Optional_Tour__c = ot.Id
-                    ));
-                }
-                insert bookingOptionalTours;
-            }
+            insertBookingLists(guests, guestContacts, booking.Id, bookingName);
+            insertBookingOptionalTours(optionalTours, booking.Id, bookingName);
 
             return booking.Id;
         } catch (DmlException e) {
@@ -167,6 +124,89 @@ public with sharing class CreateBookingController {
             Database.rollback(sp);
             throw error(e.getMessage());
         }
+    }
+
+    private static BookingRequest parseRequest(String requestJson) {
+        BookingRequest req;
+        try {
+            req = (BookingRequest) JSON.deserialize(requestJson, BookingRequest.class);
+        } catch (Exception e) {
+            throw error('The booking request could not be read. Please refresh the page and try again.');
+        }
+        if (req == null) {
+            throw error('The booking request is empty.');
+        }
+        return req;
+    }
+
+    private static Booking__c buildBooking(BookingRequest req, Tour_Plan__c plan, Id primaryContactId,
+            String bookingName, List<Optional_Tour__c> optionalTours) {
+        Boolean isAddition = req.additionInTourCost == true;
+        Boolean isReduction = req.reductionInTourCost == true;
+
+        return new Booking__c(
+            Name = bookingName,
+            Contact__c = primaryContactId,
+            Tour_Plan__c = plan.Id,
+            FOREX_Type__c = bookingForexType(plan.FOREX_Type__c),
+            Exchange_Rate__c = req.exchangeRate,
+            // As in the flow: a reduction in tour cost needs approval, everything else is approved
+            Booking_Status__c = isReduction ? STATUS_SEND_FOR_APPROVAL : STATUS_APPROVED,
+            Addition_in_Tour_Cost__c = isAddition,
+            INR_Component__c = isAddition ? nz(req.inrAddition) : 0,
+            FOREX_Component__c = isAddition ? nz(req.forexAddition) : 0,
+            Reduction_in_Tour_Cost__c = isReduction,
+            INR_Component_Reduction__c = isReduction ? nz(req.inrReduction) : 0,
+            FOREX_Component_Reduction__c = isReduction ? nz(req.forexReduction) : 0,
+            Standard_Discount__c = nz(req.standardDiscount),
+            Special_Discount__c = nz(req.specialDiscount),
+            Optional_Tour__c = !optionalTours.isEmpty(),
+            Optional_Tour_Cost__c = sumOptionalTourCost(optionalTours),
+            Nominee_Name__c = req.nomineeName,
+            Nominee_Contact_Number__c = req.nomineeContactNumber,
+            Relation_with_Nominee__c = req.relationWithNominee,
+            Remarks__c = req.remarks
+        );
+    }
+
+    private static Decimal sumOptionalTourCost(List<Optional_Tour__c> optionalTours) {
+        Decimal optionalTourCost = 0;
+        for (Optional_Tour__c ot : optionalTours) {
+            optionalTourCost += nz(ot.Cost__c);
+        }
+        return optionalTourCost;
+    }
+
+    private static void insertBookingLists(List<GuestInput> guests, List<Contact> guestContacts, Id bookingId, String bookingName) {
+        List<Customer_Booking_List__c> bookingLists = new List<Customer_Booking_List__c>();
+        for (Integer i = 0; i < guests.size(); i++) {
+            GuestInput guest = guests[i];
+            Contact c = guestContacts[i];
+            Boolean isPrimary = i == 0;
+            bookingLists.add(new Customer_Booking_List__c(
+                Name = truncate(isPrimary ? bookingName : bookingName + '-' + fullName(c), MAX_NAME_LENGTH),
+                Booking__c = bookingId,
+                Customer__c = c.Id,
+                Room_Type__c = guest.roomType,
+                Meal_Preference__c = String.isBlank(guest.mealPreference) ? null : guest.mealPreference
+            ));
+        }
+        insert as user bookingLists;
+    }
+
+    private static void insertBookingOptionalTours(List<Optional_Tour__c> optionalTours, Id bookingId, String bookingName) {
+        if (optionalTours.isEmpty()) {
+            return;
+        }
+        List<Booking_Optional_Tour__c> bookingOptionalTours = new List<Booking_Optional_Tour__c>();
+        for (Optional_Tour__c ot : optionalTours) {
+            bookingOptionalTours.add(new Booking_Optional_Tour__c(
+                Name = truncate(bookingName + '-' + ot.Name, MAX_NAME_LENGTH),
+                Booking__c = bookingId,
+                Optional_Tour__c = ot.Id
+            ));
+        }
+        insert as user bookingOptionalTours;
     }
 
     // ---------------------------------------------------------------------------------
@@ -192,38 +232,61 @@ public with sharing class CreateBookingController {
     }
 
     private static Tour_Plan__c validateRequest(BookingRequest req, List<GuestInput> guests) {
+        Set<String> newPassports = validateGuests(guests);
+        checkPassportsAreNew(newPassports);
+        validateRequiredDetails(req);
+        Tour_Plan__c plan = loadTourPlan(req);
+        validateCostAdjustments(req);
+
+        validateDiscount(req.standardDiscount, plan.Predefined_Standard_Discount__c, 'Standard Discount');
+        validateDiscount(req.specialDiscount, plan.Predefined_Special_Discount__c, 'Special Discount');
+
+        checkDuplicateBooking(req, plan);
+        return plan;
+    }
+
+    private static Set<String> validateGuests(List<GuestInput> guests) {
         Set<Id> contactIds = new Set<Id>();
         Set<String> newPassports = new Set<String>();
         for (Integer i = 0; i < guests.size(); i++) {
-            GuestInput guest = guests[i];
-            Boolean isPrimary = i == 0;
-            String who = isPrimary ? 'Primary Guest' : 'PAX ' + i;
-            if (String.isBlank(guest.roomType)) {
-                throw error('Room Type is required for ' + who + '.');
-            }
-            if (guest.contactId != null) {
-                if (!contactIds.add(guest.contactId)) {
-                    throw error('The same contact has been added more than once (' + who + ').');
-                }
-            } else {
-                validateNewContact(guest.newContact, isPrimary, who);
-                String passport = guest.newContact.passportNumber.trim().toUpperCase();
-                if (!newPassports.add(passport)) {
-                    throw error('Passport Number ' + passport + ' has been entered for more than one new contact.');
-                }
-            }
+            validateGuest(guests[i], i, contactIds, newPassports);
         }
+        return newPassports;
+    }
 
-        if (!newPassports.isEmpty()) {
-            List<Contact> existing = [
-                SELECT Id, Name, Passport_Number__c FROM Contact WHERE Passport_Number__c IN :newPassports LIMIT 1
-            ];
-            if (!existing.isEmpty()) {
-                throw error('A contact with Passport Number ' + existing[0].Passport_Number__c + ' already exists ('
-                    + existing[0].Name + '). Search and select the existing contact instead of creating a new one.');
-            }
+    private static void validateGuest(GuestInput guest, Integer index, Set<Id> contactIds, Set<String> newPassports) {
+        Boolean isPrimary = index == 0;
+        String who = isPrimary ? 'Primary Guest' : 'PAX ' + index;
+        if (String.isBlank(guest.roomType)) {
+            throw error('Room Type is required for ' + who + '.');
         }
+        if (guest.contactId != null) {
+            if (!contactIds.add(guest.contactId)) {
+                throw error('The same contact has been added more than once (' + who + ').');
+            }
+            return;
+        }
+        validateNewContact(guest.newContact, isPrimary, who);
+        String passport = guest.newContact.passportNumber.trim().toUpperCase();
+        if (!newPassports.add(passport)) {
+            throw error('Passport Number ' + passport + ' has been entered for more than one new contact.');
+        }
+    }
 
+    private static void checkPassportsAreNew(Set<String> newPassports) {
+        if (newPassports.isEmpty()) {
+            return;
+        }
+        List<Contact> existing = [
+            SELECT Id, Name, Passport_Number__c FROM Contact WHERE Passport_Number__c IN :newPassports WITH USER_MODE LIMIT 1
+        ];
+        if (!existing.isEmpty()) {
+            throw error('A contact with Passport Number ' + existing[0].Passport_Number__c + ' already exists ('
+                + existing[0].Name + '). Search and select the existing contact instead of creating a new one.');
+        }
+    }
+
+    private static void validateRequiredDetails(BookingRequest req) {
         if (req.tourPlanId == null) {
             throw error('Select a Tour Plan.');
         }
@@ -233,10 +296,13 @@ public with sharing class CreateBookingController {
         if (String.isBlank(req.relationWithNominee)) {
             throw error('Relation with Nominee is required.');
         }
+    }
+
+    private static Tour_Plan__c loadTourPlan(BookingRequest req) {
         List<Tour_Plan__c> plans = [
             SELECT Id, Name, Start_Date__c, Tour_Master__c, FOREX_Type__c,
                    Predefined_Standard_Discount__c, Predefined_Special_Discount__c
-            FROM Tour_Plan__c WHERE Id = :req.tourPlanId LIMIT 1
+            FROM Tour_Plan__c WHERE Id = :req.tourPlanId WITH USER_MODE LIMIT 1
         ];
         if (plans.isEmpty()) {
             throw error('The selected Tour Plan no longer exists.');
@@ -245,7 +311,10 @@ public with sharing class CreateBookingController {
         if (req.tourMasterId != null && plan.Tour_Master__c != req.tourMasterId) {
             throw error('The selected Tour Plan does not belong to the selected Tour Master.');
         }
+        return plan;
+    }
 
+    private static void validateCostAdjustments(BookingRequest req) {
         if (req.additionInTourCost == true) {
             validateAdjustment(req.inrAddition, req.forexAddition, 'Addition in Tour Cost');
         }
@@ -256,31 +325,39 @@ public with sharing class CreateBookingController {
         if (req.exchangeRate != null && req.exchangeRate <= 0) {
             throw error('Exchange Rate must be greater than 0.');
         }
+    }
 
-        validateDiscount(req.standardDiscount, plan.Predefined_Standard_Discount__c, 'Standard Discount');
-        validateDiscount(req.specialDiscount, plan.Predefined_Special_Discount__c, 'Special Discount');
-
+    private static void checkDuplicateBooking(BookingRequest req, Tour_Plan__c plan) {
         // Duplicate check (the flow blocks a second booking for the same guest on the same tour)
         Id primaryContactId = req.primaryGuest.contactId;
-        if (primaryContactId != null) {
-            List<Booking__c> duplicates = [
-                SELECT Id, Name FROM Booking__c
-                WHERE Contact__c = :primaryContactId AND Tour_Plan__c = :plan.Id
-                  AND Booking_Status__c != 'Rejected'
-                LIMIT 1
-            ];
-            if (!duplicates.isEmpty()) {
-                throw error('A booking already exists for this Primary Guest on the selected Tour Plan: '
-                    + duplicates[0].Name + '.');
-            }
+        if (primaryContactId == null) {
+            return;
         }
-        return plan;
+        List<Booking__c> duplicates = [
+            SELECT Id, Name FROM Booking__c
+            WHERE Contact__c = :primaryContactId AND Tour_Plan__c = :plan.Id
+              AND Booking_Status__c != 'Rejected'
+            WITH USER_MODE
+            LIMIT 1
+        ];
+        if (!duplicates.isEmpty()) {
+            throw error('A booking already exists for this Primary Guest on the selected Tour Plan: '
+                + duplicates[0].Name + '.');
+        }
     }
 
     private static void validateNewContact(NewContactInput c, Boolean isPrimary, String who) {
         if (c == null) {
             throw error('Contact details are missing for ' + who + '.');
         }
+        List<String> missing = missingContactDetails(c, isPrimary);
+        if (!missing.isEmpty()) {
+            throw error('Missing details for ' + who + ': ' + String.join(missing, ', ') + '.');
+        }
+        validateContactFormats(c, who);
+    }
+
+    private static List<String> missingContactDetails(NewContactInput c, Boolean isPrimary) {
         List<String> missing = new List<String>();
         if (String.isBlank(c.salutation)) missing.add('Salutation');
         if (String.isBlank(c.firstName)) missing.add('First Name');
@@ -292,9 +369,10 @@ public with sharing class CreateBookingController {
         if (String.isBlank(c.passportNumber)) missing.add('Passport Number');
         if (c.dateOfIssue == null) missing.add('Date of Issue');
         if (c.dateOfExpiry == null) missing.add('Date of Expiry');
-        if (!missing.isEmpty()) {
-            throw error('Missing details for ' + who + ': ' + String.join(missing, ', ') + '.');
-        }
+        return missing;
+    }
+
+    private static void validateContactFormats(NewContactInput c, String who) {
         if (String.isNotBlank(c.pan) && !Pattern.matches(PAN_PATTERN, c.pan.trim().toUpperCase())) {
             throw error('Please check the PAN No. for ' + who + ' (format: ABCDE1234F).');
         }
@@ -333,6 +411,7 @@ public with sharing class CreateBookingController {
         List<Optional_Tour__c> tours = [
             SELECT Id, Name, Cost__c FROM Optional_Tour__c
             WHERE Id IN :req.optionalTourIds AND Tour_Master__c = :plan.Tour_Master__c
+            WITH USER_MODE
         ];
         if (tours.size() != new Set<Id>(req.optionalTourIds).size()) {
             throw error('One or more selected Optional Tours are not available for this Tour Master.');
@@ -354,44 +433,51 @@ public with sharing class CreateBookingController {
                 existingIds.add(guest.contactId);
                 guestContacts.add(null);
             } else {
-                NewContactInput n = guest.newContact;
-                Contact c = new Contact(
-                    Salutation = n.salutation,
-                    FirstName = n.firstName.trim(),
-                    LastName = n.lastName.trim(),
-                    MobilePhone = String.isBlank(n.mobile) ? null : n.mobile.trim(),
-                    PAN_Number__c = String.isBlank(n.pan) ? null : n.pan.trim().toUpperCase(),
-                    Date_Of_Birth__c = n.dateOfBirth,
-                    Passport_Number__c = n.passportNumber.trim().toUpperCase(),
-                    Date_Of_Issue__c = n.dateOfIssue,
-                    Date_Of_Expiry__c = n.dateOfExpiry
-                );
+                Contact c = buildNewContact(guest.newContact);
                 newContacts.add(c);
                 guestContacts.add(c);
             }
         }
 
         if (!newContacts.isEmpty()) {
-            insert newContacts;
+            insert as user newContacts;
         }
 
         if (!existingIds.isEmpty()) {
-            Map<Id, Contact> existing = new Map<Id, Contact>(
-                [SELECT Id, FirstName, LastName FROM Contact WHERE Id IN :existingIds]
-            );
-            for (Integer i = 0; i < guests.size(); i++) {
-                Id contactId = guests[i].contactId;
-                if (contactId == null) {
-                    continue;
-                }
-                Contact c = existing.get(contactId);
-                if (c == null) {
-                    throw error('One of the selected contacts no longer exists or is not accessible.');
-                }
-                guestContacts[i] = c;
-            }
+            fillExistingContacts(guests, guestContacts, existingIds);
         }
         return guestContacts;
+    }
+
+    private static Contact buildNewContact(NewContactInput n) {
+        return new Contact(
+            Salutation = n.salutation,
+            FirstName = n.firstName.trim(),
+            LastName = n.lastName.trim(),
+            MobilePhone = String.isBlank(n.mobile) ? null : n.mobile.trim(),
+            PAN_Number__c = String.isBlank(n.pan) ? null : n.pan.trim().toUpperCase(),
+            Date_Of_Birth__c = n.dateOfBirth,
+            Passport_Number__c = n.passportNumber.trim().toUpperCase(),
+            Date_Of_Issue__c = n.dateOfIssue,
+            Date_Of_Expiry__c = n.dateOfExpiry
+        );
+    }
+
+    private static void fillExistingContacts(List<GuestInput> guests, List<Contact> guestContacts, Set<Id> existingIds) {
+        Map<Id, Contact> existing = new Map<Id, Contact>(
+            [SELECT Id, FirstName, LastName FROM Contact WHERE Id IN :existingIds WITH USER_MODE]
+        );
+        for (Integer i = 0; i < guests.size(); i++) {
+            Id contactId = guests[i].contactId;
+            if (contactId == null) {
+                continue;
+            }
+            Contact c = existing.get(contactId);
+            if (c == null) {
+                throw error('One of the selected contacts no longer exists or is not accessible.');
+            }
+            guestContacts[i] = c;
+        }
     }
 
     /** Booking__c.FOREX_Type__c is a restricted picklist; only copy the tour's forex type when it is a valid value */
