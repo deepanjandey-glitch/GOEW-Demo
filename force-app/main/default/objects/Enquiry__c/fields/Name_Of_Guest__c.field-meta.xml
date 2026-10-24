@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Name_Of_Guest__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>This field captures the name of the guest associated with this enquiry.</description>
+    <label>Name Of Guest</label>
+    <referenceTo>Contact</referenceTo>
+    <relationshipLabel>Enquiries (Name Of Guest)</relationshipLabel>
+    <relationshipName>Enquiries1</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

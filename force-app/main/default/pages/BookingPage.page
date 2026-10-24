@@ -1,0 +1,278 @@
+<apex:page standardController="Booking__c" extensions="BookingController" renderAs="pdf" applyHtmlTag="false" applyBodyTag="false" showHeader="false" sidebar="false" standardStylesheets="false" language="en-IN">
+<html>
+<head>
+<style type="text/css">
+    @page {
+        size: A4 portrait;
+        margin: 10mm 11mm 16mm 11mm;
+        @bottom-center { content: element(footer); }
+    }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 10.5pt; color: #111; }
+    .footer { position: running(footer); font-size: 10pt; font-weight: bold; }
+    .footer td { padding-top: 4px; }
+    .page-break { page-break-after: always; }
+
+    /* Header */
+    .hdr { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .hdr td { vertical-align: top; }
+    .office { width: 31%; height: 118px; padding: 26px 10px 6px 12px; color: #fff; font-family: 'Times New Roman', Times, serif;
+              font-size: 8.6pt; font-weight: bold; line-height: 1.2;
+              background-color: #e9752c; background-image: url('{!URLFOR($Resource.goewHeaderGradient)}'); background-repeat: repeat-x; background-position: top left; }
+    .office-label { font-size: 7.2pt; }
+    .logo-cell { width: 38%; text-align: center; }
+    .title { margin: 0 auto; text-align: center; font-size: 19pt; color: #2b4a7f; letter-spacing: 0.5px; }
+    .title-bar { border-bottom: 2px solid #b7bcc4; margin: 0 0 8px 0; }
+    .ref { text-align: right; font-size: 7.5pt; color: #666; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif; }
+
+    /* Tables */
+    table.grid { width: 100%; border-collapse: collapse; }
+    table.grid td, table.grid th { border: 1px solid #000; padding: 3px 5px; }
+    table.grid th { font-weight: bold; text-align: center; }
+    .details td { height: 17px; }
+    .lbl { font-weight: bold; white-space: nowrap; }
+    .center td { text-align: center; }
+    .row td { height: 19px; }
+    .section-title { text-align: center; font-weight: bold; font-size: 12.5pt; color: #7a2e7e; margin: 12px 0 7px 0; }
+    .cost-title { text-align: center; font-weight: bold; font-size: 10.5pt; margin: 12px 0 6px 0; }
+    .num { text-align: right; }
+    .checkbox { font-family: 'Arial Unicode MS', sans-serif; display: inline-block; width: 16px; height: 10px; border: 1px solid #000; text-align: center; font-size: 8pt; line-height: 10px; }
+    .notes { font-weight: bold; font-size: 10pt; margin-top: 12px; line-height: 1.35; }
+    .notes .big { font-size: 11.5pt; }
+    .declaration { text-align: center; font-size: 9.5pt; margin: 14px 30px 0 30px; line-height: 1.35; }
+
+    /* Terms */
+    .terms-title { text-align: center; font-size: 15pt; font-weight: bold; color: #b55a3c; letter-spacing: 1px; margin: 0 0 10px 0; }
+    .terms { font-size: 8.7pt; font-weight: bold; text-align: justify; line-height: 1.28; }
+    .terms td { vertical-align: top; padding-bottom: 3.5px; }
+    .terms .no { width: 18px; }
+
+    /* Cancellation */
+    .cancel-title { text-align: center; font-size: 20pt; font-weight: bold; color: #e00000; margin: 6px 0 34px 0; }
+    .cancel p { font-weight: bold; font-size: 10.5pt; margin: 0 0 14px 0; }
+    .cancel-table { width: 92%; margin: 26px auto 0 auto; border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; }
+    .cancel-table td, .cancel-table th { border: 1px solid #000; padding: 5px 8px; text-align: center; font-size: 10pt; font-weight: normal; }
+    .cancel-table th { font-size: 11.5pt; }
+    .cancel-table th small { font-size: 8.5pt; }
+</style>
+</head>
+<body>
+    <!-- Repeated at the bottom of every page -->
+    <div class="footer">
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 45%;">Date: ……………………………………………………</td>
+                <td style="width: 55%; text-align: right;">Signature of Guest ……………………………………………………</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ============================== PAGE 1: REGISTRATION FORM ============================== -->
+    <table class="hdr">
+        <tr>
+            <td class="office">
+                <span class="office-label">REGISTERED OFFICE:</span><br/>
+                8, CAMAC STREET,<br/>
+                ROOM NO.403, 04<sup style="font-size: 6pt;">TH</sup> FLOOR,<br/>
+                SHANTINIKETAN BUILDING,<br/>
+                KOLKATA-700017
+            </td>
+            <td class="logo-cell">
+                <apex:image url="{!$Resource.companylogo}" style="height: 102px;"/>
+            </td>
+            <td class="office">
+                <span class="office-label">BRANCH OFFICE:</span><br/>
+                AD-68, SALT LAKE, SECTOR 1,<br/>
+                KOLKATA-700064
+            </td>
+        </tr>
+    </table>
+    <div class="title-bar">
+        <div class="title">GUEST REGISTRATION FORM</div>
+    </div>
+    <div class="ref">Booking: {!Booking.Name}&nbsp;&nbsp;|&nbsp;&nbsp;Booked by: {!ownerName}</div>
+
+    <table class="grid details">
+        <tr><td colspan="2"><span class="lbl">Name of Guest:</span> {!guestName}</td></tr>
+        <tr><td colspan="2"><span class="lbl">Address:</span> {!guestAddress}</td></tr>
+        <tr>
+            <td style="width: 52%;"><span class="lbl">Mobile No:</span> {!BookingContact.MobilePhone}</td>
+            <td style="width: 48%;"></td>
+        </tr>
+        <tr>
+            <td><span class="lbl">E-mail ID:</span> {!BookingContact.Email}</td>
+            <td></td>
+        </tr>
+        <tr><td colspan="2"><span class="lbl">Tour Name:</span> {!tourName}</td></tr>
+        <tr><td colspan="2"><span class="lbl">Date of Departure:</span> {!departureDate}</td></tr>
+        <tr><td colspan="2"><span class="lbl">Land line:</span> {!BookingContact.Phone}</td></tr>
+        <tr><td colspan="2"><span class="lbl">Emergency contact No:</span> {!BookingContact.Emergency_Contact_Number__c}</td></tr>
+        <tr><td colspan="2"><span class="lbl">Tour No:</span> {!tourNumber}</td></tr>
+    </table>
+
+    <div class="section-title">PASSPORT DETAILS OF GUESTS</div>
+    <table class="grid">
+        <tr>
+            <th style="width: 6%;">SL.</th>
+            <th style="width: 19%;">First Name</th>
+            <th style="width: 18%;">Surname</th>
+            <th style="width: 14%;">Date of Birth</th>
+            <th style="width: 15%;">Passport No.</th>
+            <th style="width: 14%;">Date of issue</th>
+            <th style="width: 14%;">Date of Exp</th>
+        </tr>
+        <apex:repeat value="{!guests}" var="g">
+            <tr class="row">
+                <td class="lbl">{!g.sl}.</td>
+                <td>{!g.firstName}</td>
+                <td>{!g.surname}</td>
+                <td style="text-align: center;">{!g.dateOfBirth}</td>
+                <td style="text-align: center;">{!g.passportNumber}</td>
+                <td style="text-align: center;">{!g.dateOfIssue}</td>
+                <td style="text-align: center;">{!g.dateOfExpiry}</td>
+            </tr>
+        </apex:repeat>
+    </table>
+
+    <table class="grid" style="margin-top: 12px;">
+        <tr>
+            <th rowspan="2" style="width: 6%;">SL.</th>
+            <th rowspan="2" style="width: 12%;">Nationality</th>
+            <th rowspan="2" style="width: 11%;">Meal</th>
+            <th rowspan="2" style="width: 12%;">Room Type</th>
+            <th rowspan="2" style="width: 13%;">Mob. No.</th>
+            <th colspan="3">For Overseas Medical Insurance</th>
+        </tr>
+        <tr>
+            <th style="width: 17%;">Nominee</th>
+            <th style="width: 13%;">Relationship</th>
+            <th style="width: 16%;">Contact No.</th>
+        </tr>
+        <apex:repeat value="{!guests}" var="g">
+            <tr class="row">
+                <td class="lbl">{!g.sl}.</td>
+                <td>{!g.nationality}</td>
+                <td>{!g.meal}</td>
+                <td>{!g.roomType}</td>
+                <td>{!g.mobile}</td>
+                <td>{!g.nominee}</td>
+                <td>{!g.relationship}</td>
+                <td>{!g.nomineeContact}</td>
+            </tr>
+        </apex:repeat>
+    </table>
+
+    <div class="cost-title">TOUR COST (PER PERSON ON TWIN/TRIPLE SHARING BASIS) – OPTIONAL TOUR COST</div>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="width: 46%; vertical-align: top; padding: 0;">
+                <table class="grid">
+                    <tr class="row">
+                        <td style="width: 38%;">INR Amount</td>
+                        <td style="width: 26%;">INR</td>
+                        <td class="num" style="width: 36%;">
+                            <apex:outputText value="{0, number, ###,###,##0.00}" rendered="{!NOT(ISNULL(inrAmount))}"><apex:param value="{!inrAmount}"/></apex:outputText>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Foreign Exchange</td>
+                        <td>{!IF(ISBLANK(forexType), 'USD/EURO', forexType)}</td>
+                        <td class="num">
+                            <apex:outputText value="{0, number, ###,###,##0.00}" rendered="{!NOT(ISNULL(forexAmount))}"><apex:param value="{!forexAmount}"/></apex:outputText>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Tips Amount</td>
+                        <td>{!IF(ISBLANK(forexType), 'USD/EURO', forexType)}</td>
+                        <td class="num">
+                            <apex:outputText value="{0, number, ###,###,##0.00}" rendered="{!NOT(ISNULL(tipsAmount))}"><apex:param value="{!tipsAmount}"/></apex:outputText>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 4%;"></td>
+            <td style="width: 50%; vertical-align: top; padding: 0;">
+                <table class="grid">
+                    <tr>
+                        <td style="width: 46%; text-align: center;"><span class="checkbox">&nbsp;</span>&nbsp;&nbsp;OPTIONAL</td>
+                        <td style="width: 25%; text-align: center;">CURRENCY</td>
+                        <td style="width: 29%; text-align: center;">AMOUNT</td>
+                    </tr>
+                    <apex:repeat value="{!optionalTours}" var="o">
+                        <tr class="row">
+                            <td>
+                                <apex:outputPanel rendered="{!o.selected}"><span class="checkbox">&#10003;</span>&nbsp;&nbsp;</apex:outputPanel>{!o.name}
+                            </td>
+                            <td style="text-align: center;">{!IF(o.selected, o.currencyCode, IF(ISBLANK(forexType), 'USD/EURO', forexType))}</td>
+                            <td class="num">
+                                <apex:outputText value="{0, number, ###,###,##0.00}" rendered="{!NOT(ISNULL(o.amount))}"><apex:param value="{!o.amount}"/></apex:outputText>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="notes">
+        Additional Insurance amount to be payable who are above 60 years old.<br/>
+        GST 5% to be applicable on the total package cost <span style="font-size: 8pt;">(INR AMOUNT+FOREIGN EXCHANGE AMOUNT+TIPS AMOUNT)</span>.<br/>
+        <span class="big">2% T.C.S</span> <span style="font-weight: normal;">is applicable on the</span> total package cost <span style="font-weight: normal;">(including GST) as and when applicable up to date of travel only in favour of Go Everywhere Tours and Travels Pvt. Ltd., which will be adjusted with your income tax return.</span>
+    </div>
+    <div class="declaration">
+        On behalf of the person(s) named above, whose authority I have sign this agreement after knowing all the information about
+        the package and cancellation policy and also accept the terms and conditions stated in the Guest Registration form.
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- ============================== PAGE 2: TERMS & CONDITIONS ============================== -->
+    <div class="terms-title">TERMS &amp; CONDITIONS</div>
+    <table class="terms" style="width: 100%; border-collapse: collapse;">
+        <tr><td class="no">1.</td><td>Please read the day-to-day itinerary carefully. Every care has been taken to ensure information contained in the itinerary is accurate. Change can occur due to unavoidable circumstances during the tour, which are beyond our control. Go Everywhere Travels cannot accept responsibility for any such changes which are beyond our control.</td></tr>
+        <tr><td class="no">2.</td><td>All travelers require a valid passport and which should valid for six (6) months from the departure date (in some countries it is for nine months). The traveler is responsible for all documentation, entry and exit requirements of the countries visited. Go Everywhere Travels accepts no responsibility if you do not have the correct documentation or for any visa refusal.</td></tr>
+        <tr><td class="no">3.</td><td>If you have any special requirements, kindly notify us in writing at the time of booking and we will try to meet your special requirements but Go Everywhere Travels cannot guarantee those special requirements will be met by the supplier and we accept no responsibility for special requirement, not being met.</td></tr>
+        <tr><td class="no">4.</td><td>Every tour requires a minimum number of passengers to operate. If minimum numbers are not achieved tour may be cancelled on short notice. Some suppliers reserve the right to cancel departures for other reasons like weather conditions, civil disturbance, fire, floods, Acts of Government, accident or failure of machinery or equipment or any sort of natural calamity.</td></tr>
+        <tr><td class="no">5.</td><td>Go Everywhere Travels will be exempted from liability for any direct, indirect, or consequential loss, liability, claim, cost, expense, proceeding, demand, penalty, disappointment, death, injury, illness, shock, inconvenience or delay caused by situations beyond control.</td></tr>
+        <tr><td class="no">6.</td><td>All package prices are based on rates (foreign Exchange) known at the time of publication and expected to be in effect at the time of final payment. Package cost is per person, based on double occupancy. Single room supplement can be provided with an extra cost, if require. Tour price are subject to change if airfare and exchange rate alter or due to increase or introduction of any tax surcharge levied by the supplier/ airlines.</td></tr>
+        <tr><td class="no">7.</td><td>As you are traveling with a group of other travelers on vacations, you are expected to conduct yourself in a manner that is not offensive to others or disruptive to the group. For the benefit of everyone on your vacation, Go Everywhere Travels reserves the right to accept or reject any vacation participant and to remove any participant whose conduct is deemed incompatible with the interest of the other participants. In those cases, we will neither refund nor cover any cost or expenses you incur if we have to terminate your vacation arrangements due to your unacceptable behavior.</td></tr>
+        <tr><td class="no">8.</td><td>AMENDMENTS: A transfer from one tour to another will be treated as cancellation from one tour and a fresh booking on another. Therefore, cancellation charges will apply.</td></tr>
+        <tr><td class="no">9.</td><td>Passengers will have to strictly follow the tour itinerary as per the brochure or as per the amendments made by the tour manager or local representatives/guide. There will be no refund for any unutilized services by passenger on his own.</td></tr>
+        <tr><td class="no">10.</td><td>It is mandatory that a passenger must read and understand the itinerary, cost implication, payment schedule and terms &amp; conditions of Go Everywhere Tours &amp; Travels Pvt. Ltd. before signing the Guest Registration Form or making payments.</td></tr>
+        <tr><td class="no">11.</td><td>Meals are pre-booked and pre-set, the type of meals is clearly indicated in the Registration form and would not be possible to provide a special meal or a special diet other than what is mentioned in the Registration. There would be no refund if the passenger chooses not to take any meal.</td></tr>
+        <tr><td class="no">12.</td><td>Most of the hotels have safe deposit lockers. You are advised to keep your valuables in the safe deposit lockers. Also, it is advised to keep the Passport, tickets, foreign Exchange and baggage safely. In the case of loss, the consequential problems and cost will have to be borne by the passenger. Under no circumstances can Go Everywhere Travels be held responsible for any such losses whenever &amp; however it may occur.</td></tr>
+        <tr><td class="no">13.</td><td>Single room means 1 pax in 1 room, No Double Bedroom or Double Bed will be provided.</td></tr>
+        <tr><td class="no">14.</td><td>Triple room means, 1 Double bed room and 1 single extra bed or sofa bed or cot.</td></tr>
+        <tr><td class="no">15.</td><td>Flight disruption or Flight Cancellation due to any reason (natural calamity or war), Go Everywhere does not hold any responsibility for that, Tours might be curtailed as per the time and situation.</td></tr>
+        <tr><td class="no">16.</td><td>All claims, disputes of whatsoever nature relating to the tours of Go Everywhere Travels Pvt. Ltd. are subject Indian Law and Subject to the jurisdiction of Kolkata Courts only.</td></tr>
+        <tr><td class="no">17.</td><td>Go Everywhere Travels reserves the right to cancel any tour prior to the departure, without assigning any reason. In such situation we will book the passenger on a different tour date. In case if the alternate tour date is not acceptable, we shall refund all money paid by you after deducting the visa cost incurred by Go Everywhere Travels, but no compensation is payable.</td></tr>
+        <tr><td class="no">18.</td><td>In case of delay or refusal of visa resulting in cancellation / deviation of tour immediately before original departure date, cancellation / re-booking charges will have to be borne by passengers. Granting of visa is entirely at the discretion of the Embassy / Consulate.</td></tr>
+        <tr><td class="no">19.</td><td>Any claim or complaint by the passenger must be notified to Go Everywhere Tours &amp; Travels Pvt. Ltd in writing within 28 days (Twenty-Eight Days) from end of the tour. Claim notified to Go Everywhere Travels outside the period will not be entertained and the Company shall incur no liability in respect thereof. Also, the claim should be substantiated with proper evidence and for any deficiency of services provided should be countersigned by the tour manager/ local representative.</td></tr>
+        <tr><td class="no">20.</td><td>If for any reason, the VISA gets rejected or refused for any 1 pax of the family, the person who has the approved or confirmed visa has to travel or a 100% cancellation will be applied.</td></tr>
+        <tr><td class="no">21.</td><td>Go Everywhere Tours &amp; Travels will not take any responsibility towards arranging room partner for single male or female passengers. If roommate cannot be arranged, then the single passenger will have to take Single supplement.</td></tr>
+        <tr><td class="no">22.</td><td style="text-align: left;">PAYMENT SCHEDULE:<br/>
+            Registration amount / Booking Advance of Rs.50000/- (amount may vary time to time) per person is required at the time of booking.<br/>
+            The Foreign exchange amount equivalent in INR [calculated at the specified exchange rate of the payment date] is payable at least 60 days before the travel date.<br/>
+            The final payment [balance amount of the tour cost] should be completed before 30 days prior to the travel date.</td></tr>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- ============================== PAGE 3: CANCELLATION POLICY ============================== -->
+    <div class="cancel">
+        <div class="cancel-title">CANCELLATION POLICY:</div>
+        <p>Total INR Value (Value based on INR &amp; FOREX conversion)</p>
+        <p>In case of refusal of visa, the cancellation charges will be visa cost + ticket cancellation Charges + our service charges Rs.10000/- (Per Person)</p>
+        <table class="cancel-table">
+            <tr>
+                <th style="width: 50%;">TIME PERIOD</th>
+                <th style="width: 50%;">CANCELLATION CHARGES <small>(PER PERSON)</small></th>
+            </tr>
+            <tr><td>Before 46 Days prior to departure date</td><td>Rs.50000/-</td></tr>
+            <tr><td>45 – 22 Days prior to departure date</td><td>50% of the total Package Cost will be deducted</td></tr>
+            <tr><td>21 – 11 Days prior to departure date</td><td>75% of the total Package Cost will be deducted</td></tr>
+            <tr><td>10 Days or less prior to departure date</td><td>100% of the total Package Cost will be deducted</td></tr>
+        </table>
+    </div>
+</body>
+</html>
+</apex:page>

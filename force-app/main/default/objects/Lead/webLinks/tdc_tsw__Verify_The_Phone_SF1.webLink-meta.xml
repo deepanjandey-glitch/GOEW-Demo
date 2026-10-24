@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>tdc_tsw__Verify_The_Phone_SF1</fullName>
+    <availability>online</availability>
+    <displayType>button</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <height>600</height>
+    <linkType>url</linkType>
+    <masterLabel>Verify The Number</masterLabel>
+    <openType>sidebar</openType>
+    <protected>false</protected>
+    <url>/apex/tdc_tsw__VerifyThePhone?id={!Lead.Id}</url>
+</WebLink>

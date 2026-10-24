@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Mailing_state_is_mandatury</fullName>
+    <active>false</active>
+    <description>Maling state is needed.</description>
+    <errorConditionFormula>MailingState  = &quot;&quot;</errorConditionFormula>
+    <errorDisplayField>MailingState</errorDisplayField>
+    <errorMessage>Please provide the state.</errorMessage>
+</ValidationRule>

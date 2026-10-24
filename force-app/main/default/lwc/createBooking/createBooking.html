@@ -1,0 +1,627 @@
+<template>
+    <div class="cb-shell">
+        <template lwc:if={isSaving}>
+            <lightning-spinner alternative-text="Creating booking" size="medium" variant="brand"></lightning-spinner>
+        </template>
+
+        <!-- Header -->
+        <header class="cb-hero">
+            <div class="cb-hero__icon">
+                <lightning-icon icon-name="utility:world" size="small" variant="inverse"></lightning-icon>
+            </div>
+            <div class="cb-hero__text">
+                <h1 class="cb-hero__title">Create Booking</h1>
+                <p class="cb-hero__subtitle">Register the guests, choose a tour and price the booking.</p>
+            </div>
+        </header>
+
+        <div class="slds-grid slds-wrap cb-layout">
+            <!-- Main form -->
+            <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12 cb-main">
+                <!-- 1. Primary Guest -->
+                <section class="cb-card">
+                    <div class="cb-card__header">
+                        <span class="cb-step">1</span>
+                        <div>
+                            <h2 class="cb-card__title">Primary Guest</h2>
+                            <p class="cb-card__subtitle">Search an existing contact or create a new one.</p>
+                        </div>
+                    </div>
+                    <div class="cb-card__body">
+                        <div class="slds-grid slds-wrap cb-row">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                <c-contact-lookup
+                                    label="Select Primary Guest"
+                                    required
+                                    new-contact-label="New Primary Guest"
+                                    selection={primaryGuest}
+                                    exclude-ids={selectedContactIds}
+                                    onselect={handlePrimarySelect}
+                                    onremove={handlePrimaryRemove}
+                                    onnewcontact={handlePrimaryNewContact}
+                                ></c-contact-lookup>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 cb-field">
+                                <lightning-combobox
+                                    label="Room Type"
+                                    options={roomTypeOptions}
+                                    value={primaryRoomType}
+                                    placeholder="Select"
+                                    required
+                                    onchange={handlePrimaryRoomType}
+                                ></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 cb-field">
+                                <lightning-combobox
+                                    label="Meal Preference"
+                                    options={mealPreferenceOptions}
+                                    value={primaryMealPreference}
+                                    placeholder="Select"
+                                    onchange={handlePrimaryMealPreference}
+                                ></lightning-combobox>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Travellers -->
+                <section class="cb-card">
+                    <div class="cb-card__header">
+                        <span class="cb-step">2</span>
+                        <div class="cb-card__heading">
+                            <h2 class="cb-card__title">Additional Travellers (PAX)</h2>
+                            <p class="cb-card__subtitle">Travellers in addition to the Primary Guest.</p>
+                        </div>
+                    </div>
+                    <div class="cb-card__body">
+                        <div class="cb-pax-controls">
+                            <lightning-input
+                                class="cb-pax-count"
+                                type="number"
+                                label="Number of PAX"
+                                value={paxCount}
+                                min="0"
+                                max={maxPax}
+                                step="1"
+                                onchange={handlePaxCountChange}
+                            ></lightning-input>
+                            <lightning-button
+                                label="Add PAX"
+                                icon-name="utility:adduser"
+                                variant="neutral"
+                                onclick={handleAddPax}
+                            ></lightning-button>
+                        </div>
+
+                        <template lwc:if={hasPaxRows}>
+                            <ul class="cb-pax-list">
+                                <template for:each={paxRows} for:item="row">
+                                    <li key={row.key} class="cb-pax">
+                                        <div class="cb-pax__header">
+                                            <span class="cb-pax__badge">{row.label}</span>
+                                            <lightning-button-icon
+                                                icon-name="utility:close"
+                                                variant="bare"
+                                                size="medium"
+                                                alternative-text="Remove PAX"
+                                                title="Remove PAX"
+                                                data-key={row.key}
+                                                onclick={handleRemovePax}
+                                            ></lightning-button-icon>
+                                        </div>
+                                        <div class="slds-grid slds-wrap cb-row">
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                                <c-contact-lookup
+                                                    data-key={row.key}
+                                                    label="Guest"
+                                                    required
+                                                    new-contact-label="New PAX"
+                                                    selection={row.guest}
+                                                    exclude-ids={selectedContactIds}
+                                                    onselect={handlePaxSelect}
+                                                    onremove={handlePaxRemove}
+                                                    onnewcontact={handlePaxNewContact}
+                                                ></c-contact-lookup>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 cb-field">
+                                                <lightning-combobox
+                                                    data-key={row.key}
+                                                    label="Room Type"
+                                                    options={roomTypeOptions}
+                                                    value={row.roomType}
+                                                    placeholder="Select"
+                                                    required
+                                                    onchange={handlePaxRoomType}
+                                                ></lightning-combobox>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 cb-field">
+                                                <lightning-combobox
+                                                    data-key={row.key}
+                                                    label="Meal Preference"
+                                                    options={mealPreferenceOptions}
+                                                    value={row.mealPreference}
+                                                    placeholder="Select"
+                                                    onchange={handlePaxMealPreference}
+                                                ></lightning-combobox>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+                        <template lwc:else>
+                            <div class="cb-empty">
+                                <lightning-icon icon-name="utility:groups" size="small" class="cb-empty__icon"></lightning-icon>
+                                <span>Only the Primary Guest is travelling. Use <strong>Add PAX</strong> to add co-travellers.</span>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <!-- 3. Tour -->
+                <section class="cb-card">
+                    <div class="cb-card__header">
+                        <span class="cb-step">3</span>
+                        <div>
+                            <h2 class="cb-card__title">Tour</h2>
+                            <p class="cb-card__subtitle">Choose the tour, its departure and the exchange rate.</p>
+                        </div>
+                    </div>
+                    <div class="cb-card__body">
+                        <div class="slds-grid slds-wrap cb-row">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                <lightning-combobox
+                                    label="Tour Master"
+                                    options={tourMasterOptions}
+                                    value={tourMasterId}
+                                    placeholder="Select a Tour Master"
+                                    required
+                                    onchange={handleTourMasterChange}
+                                ></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                <c-tour-plan-picker
+                                    label="Tour Plan"
+                                    options={tourPlanOptions}
+                                    value={tourPlanId}
+                                    placeholder={tourPlanPlaceholder}
+                                    disabled={isTourPlanDisabled}
+                                    required
+                                    onchange={handleTourPlanChange}
+                                ></c-tour-plan-picker>
+                            </div>
+                        </div>
+
+                        <template lwc:if={selectedTourPlan}>
+                            <div class="cb-tiles">
+                                <div class="cb-tile">
+                                    <span class="cb-tile__label">Season</span>
+                                    <span class="cb-tile__value">{selectedTourPlan.Season__c}</span>
+                                </div>
+                                <div class="cb-tile">
+                                    <span class="cb-tile__label">Departure</span>
+                                    <span class="cb-tile__value">{planStartDate}</span>
+                                </div>
+                                <div class="cb-tile">
+                                    <span class="cb-tile__label">Return</span>
+                                    <span class="cb-tile__value">{planEndDate}</span>
+                                </div>
+                                <div class="cb-tile">
+                                    <span class="cb-tile__label">Duration</span>
+                                    <span class="cb-tile__value">{planDuration}</span>
+                                </div>
+                                <div class="cb-tile">
+                                    <span class="cb-tile__label">Tour Cost (INR)</span>
+                                    <span class="cb-tile__value">
+                                        <lightning-formatted-number value={inrBase} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
+                                    </span>
+                                </div>
+                                <div class="cb-tile">
+                                    <span class="cb-tile__label">Twin / Triple ({forexLabel})</span>
+                                    <span class="cb-tile__value">
+                                        <lightning-formatted-number value={planTwinForex}></lightning-formatted-number>
+                                    </span>
+                                </div>
+                                <div class="cb-tile">
+                                    <span class="cb-tile__label">Single ({forexLabel})</span>
+                                    <span class="cb-tile__value">
+                                        <lightning-formatted-number value={planSingleForex}></lightning-formatted-number>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="cb-forex">
+                                <div class="cb-forex__type">
+                                    <span class="cb-tile__label">Forex Type</span>
+                                    <template lwc:if={hasForexType}>
+                                        <span class="cb-currency-chip">
+                                            <lightning-icon icon-name="utility:moneybag" size="x-small" class="slds-m-right_xx-small"></lightning-icon>{forexType}
+                                        </span>
+                                    </template>
+                                    <template lwc:else>
+                                        <span class="slds-text-color_weak">Not set on the Tour Master</span>
+                                    </template>
+                                </div>
+                                <div class="cb-forex__rate">
+                                    <lightning-input
+                                        type="number"
+                                        label={exchangeRateLabel}
+                                        data-field="exchangeRate"
+                                        value={exchangeRate}
+                                        formatter="decimal"
+                                        step="0.01"
+                                        min="0.01"
+                                        message-when-range-underflow="Exchange Rate must be greater than 0."
+                                        field-level-help="Rate of exchange used to convert the forex part to INR. It can be updated later on the booking."
+                                        onchange={handleNumberChange}
+                                    ></lightning-input>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <!-- 4. Tour cost adjustments -->
+                <section class="cb-card">
+                    <div class="cb-card__header">
+                        <span class="cb-step">4</span>
+                        <div>
+                            <h2 class="cb-card__title">Tour Cost Adjustments</h2>
+                            <p class="cb-card__subtitle">Add to or reduce the tour cost, in INR and/or forex.</p>
+                        </div>
+                    </div>
+                    <div class="cb-card__body">
+                        <div class="slds-grid slds-wrap cb-row">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                <div class="cb-panel cb-panel_add">
+                                    <lightning-input
+                                        type="toggle"
+                                        label="Addition in Tour Cost"
+                                        data-field="additionInTourCost"
+                                        checked={additionInTourCost}
+                                        message-toggle-active=""
+                                        message-toggle-inactive=""
+                                        onchange={handleCheckboxChange}
+                                    ></lightning-input>
+                                    <template lwc:if={additionInTourCost}>
+                                        <p class="cb-hint">Fill at least one of the two components.</p>
+                                        <div class="slds-grid slds-wrap cb-row slds-m-top_x-small">
+                                            <div class="slds-col slds-size_1-of-2 cb-field">
+                                                <lightning-input
+                                                    type="number"
+                                                    formatter="currency"
+                                                    step="0.01"
+                                                    min="0"
+                                                    label="INR Component"
+                                                    data-field="inrAddition"
+                                                    value={inrAddition}
+                                                    onchange={handleNumberChange}
+                                                ></lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 cb-field">
+                                                <lightning-input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    label={forexAdditionLabel}
+                                                    data-field="forexAddition"
+                                                    value={forexAddition}
+                                                    onchange={handleNumberChange}
+                                                ></lightning-input>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                <div class="cb-panel cb-panel_reduce">
+                                    <lightning-input
+                                        type="toggle"
+                                        label="Reduction in Tour Cost"
+                                        data-field="reductionInTourCost"
+                                        checked={reductionInTourCost}
+                                        message-toggle-active=""
+                                        message-toggle-inactive=""
+                                        onchange={handleCheckboxChange}
+                                    ></lightning-input>
+                                    <template lwc:if={reductionInTourCost}>
+                                        <p class="cb-hint">Fill at least one of the two components.</p>
+                                        <div class="slds-grid slds-wrap cb-row slds-m-top_x-small">
+                                            <div class="slds-col slds-size_1-of-2 cb-field">
+                                                <lightning-input
+                                                    type="number"
+                                                    formatter="currency"
+                                                    step="0.01"
+                                                    min="0"
+                                                    label="INR Component"
+                                                    data-field="inrReduction"
+                                                    value={inrReduction}
+                                                    onchange={handleNumberChange}
+                                                ></lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 cb-field">
+                                                <lightning-input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    label={forexReductionLabel}
+                                                    data-field="forexReduction"
+                                                    value={forexReduction}
+                                                    onchange={handleNumberChange}
+                                                ></lightning-input>
+                                            </div>
+                                        </div>
+                                        <p class="cb-note">
+                                            <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            A reduction in tour cost sends the booking for approval.
+                                        </p>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Discounts -->
+                <section class="cb-card">
+                    <div class="cb-card__header">
+                        <span class="cb-step">5</span>
+                        <div>
+                            <h2 class="cb-card__title">Discounts</h2>
+                            <p class="cb-card__subtitle">Values are limited to the maximum defined on the Tour Plan.</p>
+                        </div>
+                    </div>
+                    <div class="cb-card__body">
+                        <template lwc:if={selectedTourPlan}>
+                            <div class="slds-grid slds-wrap cb-row">
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                    <div class="cb-discount">
+                                        <lightning-input
+                                            type="number"
+                                            formatter="currency"
+                                            step="0.01"
+                                            min="0"
+                                            max={standardDiscountMax}
+                                            label="Standard Discount"
+                                            data-field="standardDiscount"
+                                            value={standardDiscount}
+                                            disabled={isStandardDiscountDisabled}
+                                            message-when-range-overflow={standardDiscountRangeMessage}
+                                            message-when-range-underflow="Discount cannot be negative."
+                                            onchange={handleNumberChange}
+                                        ></lightning-input>
+                                        <div class="cb-discount__meta">
+                                            <span>
+                                                Max available
+                                                <strong><lightning-formatted-number value={standardDiscountMax} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></strong>
+                                            </span>
+                                            <lightning-button
+                                                variant="base"
+                                                label="Apply max"
+                                                data-field="standardDiscount"
+                                                disabled={isStandardDiscountDisabled}
+                                                onclick={handleApplyMaxDiscount}
+                                            ></lightning-button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 cb-field">
+                                    <div class="cb-discount">
+                                        <lightning-input
+                                            type="number"
+                                            formatter="currency"
+                                            step="0.01"
+                                            min="0"
+                                            max={specialDiscountMax}
+                                            label="Special Discount"
+                                            data-field="specialDiscount"
+                                            value={specialDiscount}
+                                            disabled={isSpecialDiscountDisabled}
+                                            message-when-range-overflow={specialDiscountRangeMessage}
+                                            message-when-range-underflow="Discount cannot be negative."
+                                            onchange={handleNumberChange}
+                                        ></lightning-input>
+                                        <div class="cb-discount__meta">
+                                            <span>
+                                                Max available
+                                                <strong><lightning-formatted-number value={specialDiscountMax} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></strong>
+                                            </span>
+                                            <lightning-button
+                                                variant="base"
+                                                label="Apply max"
+                                                data-field="specialDiscount"
+                                                disabled={isSpecialDiscountDisabled}
+                                                onclick={handleApplyMaxDiscount}
+                                            ></lightning-button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <template lwc:else>
+                            <div class="cb-empty">
+                                <lightning-icon icon-name="utility:price_books" size="small" class="cb-empty__icon"></lightning-icon>
+                                <span>Select a Tour Plan to see the available discounts.</span>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <!-- 6. Optional tours -->
+                <template lwc:if={hasOptionalTours}>
+                    <section class="cb-card">
+                        <div class="cb-card__header">
+                            <span class="cb-step">6</span>
+                            <div>
+                                <h2 class="cb-card__title">Optional Tours</h2>
+                                <p class="cb-card__subtitle">Excursions offered with this Tour Master.</p>
+                            </div>
+                        </div>
+                        <div class="cb-card__body">
+                            <lightning-input
+                                type="toggle"
+                                label="Add Optional Tours"
+                                data-field="includeOptionalTours"
+                                checked={includeOptionalTours}
+                                message-toggle-active=""
+                                message-toggle-inactive=""
+                                onchange={handleCheckboxChange}
+                            ></lightning-input>
+                            <template lwc:if={includeOptionalTours}>
+                                <lightning-checkbox-group
+                                    class="slds-m-top_small cb-optional-group"
+                                    label="Select Optional Tours"
+                                    options={optionalTourOptions}
+                                    value={selectedOptionalTourIds}
+                                    required
+                                    onchange={handleOptionalTourChange}
+                                ></lightning-checkbox-group>
+                            </template>
+                        </div>
+                    </section>
+                </template>
+
+                <!-- Nominee & remarks -->
+                <section class="cb-card">
+                    <div class="cb-card__header">
+                        <span class="cb-step cb-step_icon">
+                            <lightning-icon icon-name="utility:shield" size="xx-small" variant="inverse"></lightning-icon>
+                        </span>
+                        <div>
+                            <h2 class="cb-card__title">Nominee &amp; Remarks</h2>
+                            <p class="cb-card__subtitle">Nominee for the overseas medical insurance.</p>
+                        </div>
+                    </div>
+                    <div class="cb-card__body">
+                        <div class="slds-grid slds-wrap cb-row">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 cb-field">
+                                <lightning-input label="Nominee Name" data-field="nomineeName" value={nomineeName} max-length="225" required onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3 cb-field">
+                                <lightning-input label="Relation with Nominee" data-field="relationWithNominee" value={relationWithNominee} max-length="225" required onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3 cb-field">
+                                <lightning-input type="tel" label="Nominee Contact No." data-field="nomineeContactNumber" value={nomineeContactNumber} max-length="40" onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 cb-field">
+                                <lightning-textarea label="Remarks" data-field="remarks" value={remarks} onchange={handleFieldChange}></lightning-textarea>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Summary -->
+            <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 cb-aside">
+                <aside class="cb-summary">
+                    <div class="cb-summary__header">
+                        <h2 class="cb-summary__title">Booking Summary</h2>
+                        <span class={statusBadgeClass}>
+                            <lightning-icon icon-name={statusIcon} size="xx-small" class="slds-m-right_xx-small"></lightning-icon>{bookingStatus}
+                        </span>
+                    </div>
+
+                    <dl class="cb-summary__list">
+                        <div class="cb-summary__item">
+                            <dt>Primary Guest</dt>
+                            <dd>{primaryGuestName}</dd>
+                        </div>
+                        <div class="cb-summary__item">
+                            <dt>Travellers</dt>
+                            <dd>{travellerCountLabel}</dd>
+                        </div>
+                        <div class="cb-summary__item">
+                            <dt>Tour</dt>
+                            <dd>{tourSummaryLabel}</dd>
+                        </div>
+                        <template lwc:if={selectedTourPlan}>
+                            <div class="cb-summary__item">
+                                <dt>Departure</dt>
+                                <dd>{planStartDate}</dd>
+                            </div>
+                            <div class="cb-summary__item">
+                                <dt>Exchange Rate</dt>
+                                <dd>
+                                    <template lwc:if={hasExchangeRate}>
+                                        1 {forexLabel} = <lightning-formatted-number value={exchangeRate} format-style="currency" currency-code="INR"></lightning-formatted-number>
+                                    </template>
+                                    <template lwc:else>
+                                        <span class="slds-text-color_weak">Not entered</span>
+                                    </template>
+                                </dd>
+                            </div>
+                        </template>
+                    </dl>
+
+                    <template lwc:if={selectedTourPlan}>
+                        <div class="cb-summary__section-title">Per person · twin/triple sharing</div>
+                        <div class="cb-breakdown">
+                            <div class="cb-breakdown__row">
+                                <span>Tour cost (INR)</span>
+                                <lightning-formatted-number value={inrBase} format-style="currency" currency-code="INR"></lightning-formatted-number>
+                            </div>
+                            <template lwc:if={hasInrAddition}>
+                                <div class="cb-breakdown__row cb-breakdown__row_add">
+                                    <span>+ Addition</span>
+                                    <lightning-formatted-number value={inrAdditionValue} format-style="currency" currency-code="INR"></lightning-formatted-number>
+                                </div>
+                            </template>
+                            <template lwc:if={hasInrReduction}>
+                                <div class="cb-breakdown__row cb-breakdown__row_less">
+                                    <span>− Reduction</span>
+                                    <lightning-formatted-number value={inrReductionValue} format-style="currency" currency-code="INR"></lightning-formatted-number>
+                                </div>
+                            </template>
+                            <template lwc:if={hasDiscount}>
+                                <div class="cb-breakdown__row cb-breakdown__row_less">
+                                    <span>− Discounts</span>
+                                    <lightning-formatted-number value={totalDiscount} format-style="currency" currency-code="INR"></lightning-formatted-number>
+                                </div>
+                            </template>
+                            <div class="cb-breakdown__row cb-breakdown__row_total cb-breakdown__row_divider">
+                                <span>INR part</span>
+                                <lightning-formatted-number value={netInr} format-style="currency" currency-code="INR"></lightning-formatted-number>
+                            </div>
+                            <div class="cb-breakdown__row cb-breakdown__row_total">
+                                <span>Forex part ({forexLabel})</span>
+                                <lightning-formatted-number value={netForex} maximum-fraction-digits="2"></lightning-formatted-number>
+                            </div>
+                            <template lwc:if={hasExchangeRate}>
+                                <div class="cb-breakdown__row cb-breakdown__row_muted">
+                                    <span>≈ Forex part in INR</span>
+                                    <lightning-formatted-number value={forexInInr} format-style="currency" currency-code="INR"></lightning-formatted-number>
+                                </div>
+                            </template>
+                            <template lwc:if={hasSelectedOptionalTours}>
+                                <div class="cb-breakdown__row cb-breakdown__row_muted">
+                                    <span>Optional tours ({forexLabel})</span>
+                                    <lightning-formatted-number value={optionalTourForex} maximum-fraction-digits="2"></lightning-formatted-number>
+                                </div>
+                            </template>
+                        </div>
+                        <p class="cb-summary__footnote">Before 5% GST and TCS. Final amounts are calculated on the booking.</p>
+                    </template>
+
+                    <div class="cb-summary__actions">
+                        <lightning-button
+                            variant="brand"
+                            label="Create Booking"
+                            icon-name="utility:check"
+                            stretch
+                            onclick={handleCreateBooking}
+                            disabled={isSaving}
+                        ></lightning-button>
+                        <lightning-button
+                            variant="neutral"
+                            label="Reset"
+                            icon-name="utility:refresh"
+                            stretch
+                            onclick={handleReset}
+                            disabled={isSaving}
+                        ></lightning-button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>City_should_be_madatory</fullName>
+    <active>false</active>
+    <description>Mailing city is needed.</description>
+    <errorConditionFormula>MailingCity  = &quot;&quot;</errorConditionFormula>
+    <errorDisplayField>MailingCity</errorDisplayField>
+    <errorMessage>Please provide the city</errorMessage>
+</ValidationRule>

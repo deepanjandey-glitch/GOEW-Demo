@@ -1,0 +1,156 @@
+<apex:page standardController="Booking__c" extensions="TourCostCalculationController" renderAs="pdf" applyHtmlTag="false" applyBodyTag="false" showHeader="false" sidebar="false" standardStylesheets="false" language="en-IN">
+<html>
+<head>
+<style type="text/css">
+    @page { size: A4 portrait; margin: 12mm 12mm 14mm 12mm; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; }
+    .page-break { page-break-after: always; }
+
+    .logo { text-align: center; margin-bottom: 8px; }
+    .title { background-color: #fff2cc; border: 1.5px solid #000; padding: 7px 10px; font-weight: bold; font-size: 11pt; text-align: center; }
+    .guest { margin: 8px 0 10px 0; font-size: 10.5pt; }
+    .guest span { color: #555; font-weight: normal; }
+
+    table.sheet { width: 100%; border-collapse: collapse; }
+    table.sheet td { border: 1px solid #000; padding: 3px 6px; vertical-align: middle; }
+    .tag { width: 9%; font-weight: bold; }
+    .label { width: 43%; }
+    .value { width: 17%; text-align: right; color: #e00000; }
+    .side { width: 31%; text-align: center; font-weight: bold; font-size: 8.5pt; }
+    .bold td { font-weight: bold; }
+    .note-red { background-color: #ff7c80; }
+    .tcs td { background-color: #ffd966; font-weight: bold; }
+    .payable td { background-color: #ffff00; font-weight: bold; font-size: 13pt; padding: 5px 6px; }
+    .net td { background-color: #b9f56c; font-weight: bold; font-size: 13pt; padding: 5px 6px; }
+    .payable .value, .net .value { font-size: 14pt; }
+
+    .insurance { margin: 14px 8% 0 8%; padding: 6px 10px; border: 1.5px solid #000; background-color: #ff7c80; font-weight: bold; text-align: center; font-size: 9.5pt; }
+    .warn { margin-top: 8px; padding: 5px 8px; border: 1px solid #c00; color: #c00; font-weight: bold; font-size: 9pt; }
+
+    table.optional { width: 100%; border-collapse: collapse; margin-top: 22px; }
+    table.optional td { border: 1px solid #000; padding: 3px 6px; }
+    .optional-head td { background-color: #fff2cc; font-weight: bold; text-align: center; }
+    .red { color: #e00000; }
+    .opt-total td { font-weight: bold; font-size: 11pt; }
+    .opt-total .green { background-color: #b9f56c; }
+    .opt-tcs td { background-color: #ffd966; }
+</style>
+</head>
+<body>
+<apex:repeat value="{!guests}" var="g">
+    <div class="logo"><apex:image url="{!$Resource.companylogo}" style="height: 70px;"/></div>
+    <div class="title">{!IF(ISBLANK(BookingTourPlan.Name), Booking.Name, BookingTourPlan.Name)} &nbsp;|&nbsp; PACKAGE COST CALCULATION PER HEAD</div>
+    <div class="guest"><b>Guest: {!g.customerName}</b> <span>{!IF(ISBLANK(g.roomType), '', '(' + g.roomType + ' room)')}</span></div>
+
+    <table class="sheet">
+        <tr>
+            <td class="tag"></td>
+            <td class="label" style="text-align: center;">INR PART</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!inrPart}"/></apex:outputText></td>
+            <td class="side"></td>
+        </tr>
+        <tr>
+            <td class="tag">LESS</td>
+            <td class="label">DISCOUNT</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!discount}"/></apex:outputText></td>
+            <td class="side"></td>
+        </tr>
+        <tr>
+            <td class="tag"></td>
+            <td class="label">SUB TOTAL INR</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!subTotalInr}"/></apex:outputText></td>
+            <td class="side"></td>
+        </tr>
+        <tr>
+            <td class="tag"></td>
+            <td class="label">GROUND HANDLING CHARGE ({!forexType})</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!g.groundHandling}"/></apex:outputText></td>
+            <td class="side note-red" rowspan="2">* Rate of exchange might change depending on the date of forex payment.<br/>Final ROE will be Interbanking Rate + INR 2.5 (NEFT) / INR 3.5 (Cheque) on the date of forex payment.</td>
+        </tr>
+        <tr>
+            <td class="tag"></td>
+            <td class="label">SUB TOTAL GHC ({!forexType} 1 = <apex:outputText value="{0, number, #,##0.##}"><apex:param value="{!Booking.Exchange_Rate__c}"/></apex:outputText> INR)</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!g.subTotalGhc}"/></apex:outputText></td>
+        </tr>
+        <tr class="bold">
+            <td class="tag">ADD</td>
+            <td class="label">{!gstPercent}% GST ON TOTAL PACKAGE COST</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!g.gst}"/></apex:outputText></td>
+            <td class="side"></td>
+        </tr>
+        <tr class="tcs">
+            <td class="tag">ADD</td>
+            <td class="label">{!tcsPercent}% TCS ON TOTAL PACKAGE COST</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!g.tcs}"/></apex:outputText></td>
+            <td class="side">REFUNDABLE IN ITR, SECTION 26AS</td>
+        </tr>
+        <tr class="payable">
+            <td colspan="2" style="text-align: center;">TOTAL PAYABLE PER HEAD **</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!g.totalPayable}"/></apex:outputText></td>
+            <td class="side" style="background-color: #fff;"></td>
+        </tr>
+        <tr class="net">
+            <td colspan="2" style="text-align: center;">NET COST AFTER TCS REFUND</td>
+            <td class="value"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!g.netCost}"/></apex:outputText></td>
+            <td class="side" style="background-color: #fff;"></td>
+        </tr>
+    </table>
+
+    <apex:outputPanel rendered="{!NOT(hasExchangeRate)}" layout="block" styleClass="warn">
+        The Exchange Rate is not set on this booking, so the ground handling and optional tour amounts are shown as 0 in INR.
+    </apex:outputPanel>
+
+    <div class="insurance">
+        ** This amount includes the travel insurance premium upto 60 years. Additional premium difference is applicable for people above 60 years, depending on their age.
+    </div>
+
+    <apex:outputPanel rendered="{!hasOptionalTours}" layout="none">
+        <table class="optional">
+            <tr class="optional-head">
+                <td colspan="4">ADDITIONAL <span class="red">OPTIONAL</span> COST <span class="red">(R.O.E. {!forexType} 1 = INR <apex:outputText value="{0, number, #,##0.##}"><apex:param value="{!Booking.Exchange_Rate__c}"/></apex:outputText>*)</span></td>
+            </tr>
+            <tr>
+                <td style="width: 9%;"></td>
+                <td style="width: 43%;"></td>
+                <td style="width: 17%; text-align: center;">COST ({!forexType})</td>
+                <td style="width: 31%; text-align: center;">COST (INR)</td>
+            </tr>
+            <apex:repeat value="{!optionalTours}" var="o">
+                <tr>
+                    <td></td>
+                    <td>{!o.name}</td>
+                    <td class="red" style="text-align: right;"><apex:outputText value="{0, number, #,##0.##}"><apex:param value="{!o.forexCost}"/></apex:outputText></td>
+                    <td class="red" style="text-align: right;"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!o.inrCost}"/></apex:outputText></td>
+                </tr>
+            </apex:repeat>
+            <tr>
+                <td><b>ADD</b></td>
+                <td>{!gstPercent}% GST</td>
+                <td></td>
+                <td class="red" style="text-align: right;"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!optionalGst}"/></apex:outputText></td>
+            </tr>
+            <tr class="opt-tcs">
+                <td><b>ADD</b></td>
+                <td class="red"><b>{!tcsPercent}% TCS</b></td>
+                <td style="text-align: center; font-size: 8pt;" class="red"><b>REFUNDABLE IN ITR; SEC 26AS</b></td>
+                <td class="red" style="text-align: right;"><b><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!optionalTcs}"/></apex:outputText></b></td>
+            </tr>
+            <tr class="opt-total">
+                <td></td>
+                <td class="green">TOTAL OPTIONAL COST IN INR</td>
+                <td class="green"></td>
+                <td class="green red" style="text-align: right;"><apex:outputText value="{0, number, #,##0.00}"><apex:param value="{!optionalTotal}"/></apex:outputText></td>
+            </tr>
+        </table>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!NOT(g.isLast)}" layout="block" styleClass="page-break"/>
+</apex:repeat>
+<apex:outputPanel rendered="{!guests.size == 0}" layout="block">
+    <div class="logo"><apex:image url="{!$Resource.companylogo}" style="height: 70px;"/></div>
+    <div class="title">{!Booking.Name} &nbsp;|&nbsp; PACKAGE COST CALCULATION PER HEAD</div>
+    <p>No guests (Customer Booking List records) are linked to this booking yet.</p>
+</apex:outputPanel>
+</body>
+</html>
+</apex:page>

@@ -1,0 +1,5 @@
+/* Widens the Booking PDF quick action modal (scoped to modals that contain the viewer) */
+.slds-modal__container:has(.booking-pdf-viewer) {
+    width: 90%;
+    max-width: 72rem;
+}

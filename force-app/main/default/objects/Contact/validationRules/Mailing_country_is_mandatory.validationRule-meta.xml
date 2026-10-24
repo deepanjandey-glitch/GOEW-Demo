@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Mailing_country_is_mandatory</fullName>
+    <active>false</active>
+    <description>Maling country is needed.</description>
+    <errorConditionFormula>MailingCountry  = &quot;&quot;</errorConditionFormula>
+    <errorDisplayField>MailingCountry</errorDisplayField>
+    <errorMessage>Please provide the country.</errorMessage>
+</ValidationRule>

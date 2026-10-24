@@ -1,0 +1,68 @@
+<template>
+    <div class={formElementClass}>
+        <label class="slds-form-element__label" for="trigger">
+            <template lwc:if={required}><abbr class="slds-required" title="required">* </abbr></template>{label}
+        </label>
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container">
+                <div class={comboboxClass}>
+                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                        <button
+                            type="button"
+                            id="trigger"
+                            class={triggerClass}
+                            title={selectedTitle}
+                            aria-haspopup="listbox"
+                            aria-expanded={ariaExpanded}
+                            aria-controls="listbox"
+                            disabled={disabled}
+                            onclick={handleToggle}
+                            onblur={handleBlur}
+                            onkeydown={handleKeyDown}
+                        >
+                            <template lwc:if={hasSelection}>
+                                <span class="slds-truncate">{selectedName}<template lwc:if={selectedDate}><strong>{selectedDate}</strong></template></span>
+                            </template>
+                            <template lwc:else>
+                                <span class="slds-truncate placeholder">{placeholder}</span>
+                            </template>
+                        </button>
+                        <span class="slds-icon_container slds-input__icon slds-input__icon_right">
+                            <lightning-icon icon-name="utility:down" size="x-small" alternative-text=""></lightning-icon>
+                        </span>
+                    </div>
+                    <div id="listbox" class="slds-dropdown slds-dropdown_length-10 slds-dropdown_fluid" role="listbox" aria-label={label}>
+                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <template for:each={viewOptions} for:item="option">
+                                <li key={option.value} role="presentation" class="slds-listbox__item">
+                                    <div
+                                        class={option.className}
+                                        role="option"
+                                        aria-selected={option.ariaSelected}
+                                        data-index={option.index}
+                                        onmousedown={handleOptionMouseDown}
+                                    >
+                                        <span class="slds-media__figure slds-listbox__option-icon">
+                                            <template lwc:if={option.isSelected}>
+                                                <lightning-icon icon-name="utility:check" size="x-small" alternative-text="Selected"></lightning-icon>
+                                            </template>
+                                        </span>
+                                        <span class="slds-media__body option-text">{option.name}<template lwc:if={option.dateText}><strong>{option.dateText}</strong></template></span>
+                                    </div>
+                                </li>
+                            </template>
+                            <template lwc:if={noOptions}>
+                                <li role="presentation" class="slds-listbox__item">
+                                    <div class="slds-listbox__option slds-listbox__option_plain slds-text-color_weak">No Tour Plans available</div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <template lwc:if={showError}>
+            <div class="slds-form-element__help">{messageWhenValueMissing}</div>
+        </template>
+    </div>
+</template>

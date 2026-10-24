@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Tour_Master_Name__c</fullName>
+    <description>Tour Master of the booking&apos;s Tour Plan (formula, always in sync with the Tour Plan).</description>
+    <externalId>false</externalId>
+    <formula>Tour_Plan__r.Tour_Master__r.Name</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Taken from the Tour Plan of this booking.</inlineHelpText>
+    <label>Tour Master</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

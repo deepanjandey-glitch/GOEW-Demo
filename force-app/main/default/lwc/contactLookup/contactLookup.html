@@ -1,0 +1,88 @@
+<template>
+    <template lwc:if={hasSelection}>
+        <div class="slds-form-element">
+            <span class="slds-form-element__label">
+                <template lwc:if={required}><abbr class="slds-required" title="required">* </abbr></template>{label}
+            </span>
+            <div class="slds-form-element__control selection">
+                <lightning-pill label={selection.name} onremove={handleRemove}>
+                    <lightning-icon icon-name="standard:contact" alternative-text="Contact"></lightning-icon>
+                </lightning-pill>
+                <template lwc:if={selection.isNew}>
+                    <lightning-badge label="New - created on save" class="slds-theme_success slds-m-left_x-small"></lightning-badge>
+                </template>
+            </div>
+            <template lwc:if={selection.subtitle}>
+                <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">{selection.subtitle}</div>
+            </template>
+        </div>
+    </template>
+    <template lwc:else>
+        <div class="slds-combobox_container">
+            <div class={comboboxClass}>
+                <lightning-input
+                    type="search"
+                    label={label}
+                    required={required}
+                    value={searchTerm}
+                    placeholder={placeholder}
+                    is-loading={isLoading}
+                    autocomplete="off"
+                    onchange={handleSearchChange}
+                    onfocus={handleFocus}
+                    onblur={handleBlur}
+                ></lightning-input>
+                <div class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid" role="listbox">
+                    <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                        <template for:each={results} for:item="record">
+                            <li key={record.id} role="presentation" class="slds-listbox__item">
+                                <div
+                                    class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta"
+                                    role="option"
+                                    data-id={record.id}
+                                    onmousedown={handleResultMouseDown}
+                                >
+                                    <span class="slds-media__figure slds-listbox__option-icon">
+                                        <lightning-icon icon-name="standard:contact" size="small"></lightning-icon>
+                                    </span>
+                                    <span class="slds-media__body">
+                                        <span class="slds-listbox__option-text slds-listbox__option-text_entity">{record.name}</span>
+                                        <span class="slds-listbox__option-meta slds-listbox__option-meta_entity">{record.subtitle}</span>
+                                    </span>
+                                </div>
+                            </li>
+                        </template>
+                        <template lwc:if={showSearchHint}>
+                            <li role="presentation" class="slds-listbox__item">
+                                <div class="slds-listbox__option slds-listbox__option_plain slds-text-color_weak" role="presentation">
+                                    Type at least 2 characters to search
+                                </div>
+                            </li>
+                        </template>
+                        <template lwc:if={showNoResults}>
+                            <li role="presentation" class="slds-listbox__item">
+                                <div class="slds-listbox__option slds-listbox__option_plain slds-text-color_weak" role="presentation">
+                                    No matching contacts found
+                                </div>
+                            </li>
+                        </template>
+                        <li role="presentation" class="slds-listbox__item">
+                            <div
+                                class="slds-media slds-listbox__option slds-listbox__option_entity new-contact"
+                                role="option"
+                                onmousedown={handleNewContactMouseDown}
+                            >
+                                <span class="slds-media__figure slds-listbox__option-icon">
+                                    <lightning-icon icon-name="utility:add" size="x-small"></lightning-icon>
+                                </span>
+                                <span class="slds-media__body">
+                                    <span class="slds-listbox__option-text slds-listbox__option-text_entity">{newContactText}</span>
+                                </span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </template>
+</template>

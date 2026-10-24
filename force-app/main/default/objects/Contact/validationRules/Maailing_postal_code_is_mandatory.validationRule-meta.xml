@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Maailing_postal_code_is_mandatory</fullName>
+    <active>false</active>
+    <description>Postal code is needed.</description>
+    <errorConditionFormula>MailingPostalCode  = &quot;&quot;</errorConditionFormula>
+    <errorDisplayField>MailingPostalCode</errorDisplayField>
+    <errorMessage>Please provide the postal code.</errorMessage>
+</ValidationRule>

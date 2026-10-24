@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>FOREX_Types_MT__c</fullName>
+    <description>This field value was fetched from the Tour Master Object</description>
+    <externalId>false</externalId>
+    <formula>TEXT( Tour_Plan__r.Tour_Master__r.FOREX_Type__c )</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>FOREX Type</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

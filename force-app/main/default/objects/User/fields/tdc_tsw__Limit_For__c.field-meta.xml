@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>tdc_tsw__Limit_For__c</fullName>
+    <deprecated>false</deprecated>
+    <externalId>false</externalId>
+    <inlineHelpText>Use Following Digit Literals For Message Limiting In Comma-Separated Format Like(1,2,3) 
+1. Detail Page button
+2. Conversation View
+3. Incoming Alert
+4. Automation
+5. Custom Development
+6. List View
+7. Campaign
+8. SMSFromReport</inlineHelpText>
+    <label>Message Limit For</label>
+    <length>30</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

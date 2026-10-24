@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Booking__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Created for showing the Booking Name</description>
+    <label>Booking</label>
+    <referenceTo>Booking__c</referenceTo>
+    <relationshipLabel>Booking Optional Tours</relationshipLabel>
+    <relationshipName>Booking_Optional_Tours</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

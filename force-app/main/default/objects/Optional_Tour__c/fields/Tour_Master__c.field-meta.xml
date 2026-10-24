@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Tour_Master__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Tour Master</label>
+    <referenceTo>Tour_Master__c</referenceTo>
+    <relationshipLabel>Optional Tours</relationshipLabel>
+    <relationshipName>Optional_Tours</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

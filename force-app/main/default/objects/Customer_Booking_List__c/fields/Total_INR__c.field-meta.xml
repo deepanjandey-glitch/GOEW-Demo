@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_INR__c</fullName>
+    <formula>( Booking__r.Tour_Plan__r.Cost_INR__c + Booking__r.INR_Component__c - Booking__r.INR_Component_Reduction__c -  Booking__r.Special_Discount__c - Booking__r.Standard_Discount__c)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Total INR</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

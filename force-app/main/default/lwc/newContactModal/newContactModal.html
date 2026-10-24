@@ -1,0 +1,117 @@
+<template>
+    <lightning-modal-header label={heading}></lightning-modal-header>
+    <lightning-modal-body>
+        <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+            The contact will be created when the booking is saved.
+        </p>
+        <div class="slds-grid slds-wrap slds-gutters">
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                <lightning-combobox
+                    label="Salutation"
+                    data-field="salutation"
+                    options={salutationOptions}
+                    value={contact.salutation}
+                    placeholder="Select"
+                    required
+                    onchange={handleChange}
+                ></lightning-combobox>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                <lightning-input
+                    label="First Name"
+                    data-field="firstName"
+                    value={contact.firstName}
+                    max-length="40"
+                    required
+                    onchange={handleChange}
+                ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                <lightning-input
+                    label="Last Name"
+                    data-field="lastName"
+                    value={contact.lastName}
+                    max-length="80"
+                    required
+                    onchange={handleChange}
+                ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                <lightning-input
+                    type="date"
+                    label="Date of Birth"
+                    data-field="dateOfBirth"
+                    value={contact.dateOfBirth}
+                    max={today}
+                    message-when-range-overflow="Date of Birth cannot be in the future."
+                    required
+                    onchange={handleChange}
+                ></lightning-input>
+            </div>
+            <!-- Mobile and PAN are collected for the Primary Guest only -->
+            <template lwc:if={isPrimaryGuest}>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                    <lightning-input
+                        type="tel"
+                        label="Mobile"
+                        data-field="mobile"
+                        value={contact.mobile}
+                        max-length="40"
+                        required
+                        onchange={handleChange}
+                    ></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                    <lightning-input
+                        label="PAN"
+                        data-field="pan"
+                        value={contact.pan}
+                        pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
+                        message-when-pattern-mismatch="Please check the PAN No. (format: ABCDE1234F)."
+                        max-length="10"
+                        required
+                        onchange={handleChange}
+                    ></lightning-input>
+                </div>
+            </template>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                <lightning-input
+                    label="Passport Number"
+                    data-field="passportNumber"
+                    value={contact.passportNumber}
+                    pattern="[A-Z0-9]+"
+                    message-when-pattern-mismatch="Please provide a valid Passport Number."
+                    max-length="10"
+                    required
+                    onchange={handleChange}
+                ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                <lightning-input
+                    type="date"
+                    label="Date of Issue"
+                    data-field="dateOfIssue"
+                    value={contact.dateOfIssue}
+                    max={today}
+                    message-when-range-overflow="Date of Issue cannot be in the future."
+                    required
+                    onchange={handleChange}
+                ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                <lightning-input
+                    type="date"
+                    label="Date of Expiry"
+                    data-field="dateOfExpiry"
+                    value={contact.dateOfExpiry}
+                    required
+                    onchange={handleChange}
+                ></lightning-input>
+            </div>
+        </div>
+    </lightning-modal-body>
+    <lightning-modal-footer>
+        <lightning-button label="Cancel" onclick={handleCancel}></lightning-button>
+        <lightning-button variant="brand" label="Add Contact" class="slds-m-left_x-small" onclick={handleSave}></lightning-button>
+    </lightning-modal-footer>
+</template>

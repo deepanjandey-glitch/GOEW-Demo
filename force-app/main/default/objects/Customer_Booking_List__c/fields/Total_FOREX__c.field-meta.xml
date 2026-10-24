@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_FOREX__c</fullName>
+    <description>Total FOREX component of the tour including discounts, additional cost, optional tour cost. This is in FOREX without conversion to INR and excluding any taxes.</description>
+    <externalId>false</externalId>
+    <formula>CASE(Room_Type__c,
+&apos;Single&apos;,((Booking__r.Tour_Plan__r.Single__c + Booking__r.FOREX_Component__c) -  Booking__r.FOREX_Component_Reduction__c ),
+
+&apos;Double&apos;,((Booking__r.Tour_Plan__r.Double_Tuwin_Triple__c + Booking__r.FOREX_Component__c) -  Booking__r.FOREX_Component_Reduction__c ),
+
+&apos;Triple&apos;,((Booking__r.Tour_Plan__r.Double_Tuwin_Triple__c + Booking__r.FOREX_Component__c) -  Booking__r.FOREX_Component_Reduction__c ),
+
+&apos;Twin&apos;,((Booking__r.Tour_Plan__r.Double_Tuwin_Triple__c + Booking__r.FOREX_Component__c) -  Booking__r.FOREX_Component_Reduction__c ),
+
+&apos;Child With Bed&apos;,(( Booking__r.Tour_Plan__r.Child_With_Bed__c + Booking__r.FOREX_Component__c) -  Booking__r.FOREX_Component_Reduction__c ),
+
+&apos;Child Without Bed&apos;,(( Booking__r.Tour_Plan__r.Child_Without_Bed__c +Booking__r.FOREX_Component__c) -  Booking__r.FOREX_Component_Reduction__c ),0)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Total FOREX</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

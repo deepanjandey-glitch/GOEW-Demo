@@ -1,0 +1,27 @@
+.trigger {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.trigger:disabled {
+    cursor: not-allowed;
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+    color: var(--slds-g-color-neutral-base-50, #706e6b);
+}
+
+.placeholder {
+    color: var(--slds-g-color-neutral-base-50, #706e6b);
+}
+
+.option {
+    cursor: pointer;
+}
+
+/* Long tour names wrap in the list instead of being cut off */
+.option-text {
+    white-space: normal;
+    line-height: 1.3;
+}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Meal_Preference__c</fullName>
+    <label>Meal Preference</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Hindu</fullName>
+                <default>false</default>
+                <label>Hindu</label>
+            </value>
+            <value>
+                <fullName>Veg</fullName>
+                <default>false</default>
+                <label>Veg</label>
+            </value>
+            <value>
+                <fullName>HNML</fullName>
+                <default>false</default>
+                <label>HNML</label>
+            </value>
+            <value>
+                <fullName>Jain</fullName>
+                <default>false</default>
+                <label>Jain</label>
+            </value>
+            <value>
+                <fullName>None Of The Above</fullName>
+                <default>false</default>
+                <label>None Of The Above</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

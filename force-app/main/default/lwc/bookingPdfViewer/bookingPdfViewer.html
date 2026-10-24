@@ -1,0 +1,51 @@
+<template>
+    <lightning-quick-action-panel header={title} class="booking-pdf-viewer">
+        <div class="viewer">
+            <template lwc:if={showSpinner}>
+                <lightning-spinner alternative-text="Loading" size="medium" variant="brand"></lightning-spinner>
+            </template>
+
+            <template lwc:if={isPhone}>
+                <div class="phone-card">
+                    <lightning-icon icon-name="doctype:pdf" size="large"></lightning-icon>
+                    <p class="phone-card__title">{title}</p>
+                    <p class="phone-card__text">Download the PDF to view or share it, or save it to the Files of this booking.</p>
+                </div>
+            </template>
+            <template lwc:elseif={pageUrl}>
+                <iframe class="frame" src={pageUrl} title={title} onload={handleFrameLoad}></iframe>
+            </template>
+        </div>
+
+        <div slot="footer" class="footer">
+            <lightning-button
+                class="footer__close"
+                label="Close"
+                onclick={handleClose}
+            ></lightning-button>
+            <div class="footer__actions">
+                <template lwc:if={isPhone}>
+                    <lightning-button
+                        label="Open"
+                        icon-name="utility:preview"
+                        onclick={handleOpen}
+                        disabled={isBusy}
+                    ></lightning-button>
+                </template>
+                <lightning-button
+                    label="Download"
+                    icon-name="utility:download"
+                    onclick={handleDownload}
+                    disabled={isBusy}
+                ></lightning-button>
+                <lightning-button
+                    variant="brand"
+                    label="Save to Files"
+                    icon-name="utility:save"
+                    onclick={handleSave}
+                    disabled={isBusy}
+                ></lightning-button>
+            </div>
+        </div>
+    </lightning-quick-action-panel>
+</template>

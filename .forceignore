@@ -1,0 +1,4 @@
+# SF Audit: ignore local tooling
+**/.DS_Store
+**/jsconfig.json
+**/.eslintrc.json

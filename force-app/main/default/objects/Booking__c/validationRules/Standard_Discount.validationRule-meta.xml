@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Standard_Discount</fullName>
+    <active>true</active>
+    <description>Standard Discount cannot be greater than predefined standard discount</description>
+    <errorConditionFormula>Tour_Plan__r.Predefined_Standard_Discount__c &lt; Standard_Discount__c</errorConditionFormula>
+    <errorDisplayField>Standard_Discount__c</errorDisplayField>
+    <errorMessage>Standard Discount value should not exceed pre-defined value.
+Contact Admin for further assistance.</errorMessage>
+</ValidationRule>

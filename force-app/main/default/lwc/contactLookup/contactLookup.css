@@ -1,0 +1,10 @@
+.selection {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.new-contact {
+    border-top: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+    color: var(--slds-g-color-brand-base-50, #0176d3);
+}

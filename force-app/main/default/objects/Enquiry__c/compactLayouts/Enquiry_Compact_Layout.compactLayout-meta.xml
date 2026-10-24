@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompactLayout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Enquiry_Compact_Layout</fullName>
+    <fields>Name</fields>
+    <fields>Name_Of_Guest__c</fields>
+    <fields>Guest_s_Phone_Number__c</fields>
+    <fields>Guest_s_Mail_Id__c</fields>
+    <fields>Number_Of_Members__c</fields>
+    <fields>Tour_Plan__c</fields>
+    <label>Enquiry Compact Layout</label>
+</CompactLayout>

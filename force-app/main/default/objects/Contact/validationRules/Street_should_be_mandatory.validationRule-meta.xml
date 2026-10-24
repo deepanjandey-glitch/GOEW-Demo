@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Street_should_be_mandatory</fullName>
+    <active>false</active>
+    <description>Street address is needed.</description>
+    <errorConditionFormula>MailingStreet  = &quot;&quot;</errorConditionFormula>
+    <errorDisplayField>MailingStreet</errorDisplayField>
+    <errorMessage>Please provide the street.</errorMessage>
+</ValidationRule>

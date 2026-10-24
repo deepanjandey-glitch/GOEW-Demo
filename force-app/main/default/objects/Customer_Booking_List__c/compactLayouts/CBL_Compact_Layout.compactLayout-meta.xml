@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompactLayout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CBL_Compact_Layout</fullName>
+    <fields>Name</fields>
+    <fields>Booking__c</fields>
+    <fields>Customer__c</fields>
+    <fields>Total_Tour_Cost_in_INR__c</fields>
+    <label>CBL Compact Layout</label>
+</CompactLayout>

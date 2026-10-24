@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Stage__c</fullName>
+    <label>Stage</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Qualify</fullName>
+                <default>false</default>
+                <label>Qualify</label>
+            </value>
+            <value>
+                <fullName>Meet &amp; Present</fullName>
+                <default>false</default>
+                <label>Meet &amp; Present</label>
+            </value>
+            <value>
+                <fullName>Propose</fullName>
+                <default>false</default>
+                <label>Propose</label>
+            </value>
+            <value>
+                <fullName>Negotiate</fullName>
+                <default>false</default>
+                <label>Negotiate</label>
+            </value>
+            <value>
+                <fullName>Closed Won</fullName>
+                <default>false</default>
+                <label>Closed Won</label>
+            </value>
+            <value>
+                <fullName>Closed Lost</fullName>
+                <default>false</default>
+                <label>Closed Lost</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
